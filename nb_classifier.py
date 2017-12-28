@@ -10,6 +10,12 @@ class MultinomialNB():
         self.x_given_y_log_prob = None
 
     def fit(self, X, y):
+        # Fit uses the training data variables X, and training classification outputs y
+        # to learn the probability of occurrence for each (non-numeric) word in all of
+        # the training example mails for each class.
+        # There is some redundancy in making use of the word frequencies, vocabulary count, etc.
+        # in the fitter. This will be improved in further commits.
+
         # Pr[Y|X] = Pr[X|Y]*Pr[Y]/Pr[X]
         # Pr[Y] = (number of spam or ham)/number of data points
         # Pr[X] = (number of occurrences of a word)/(total number of occurrences of all words)
@@ -36,6 +42,11 @@ class MultinomialNB():
         # return np.argmax([(self.x_given_y_log_prob * x).sum(axis=1) + self.y_log_apriori for x in X], axis=1)
 
 def process_dataset(filename):
+    # Read data points from the csv filename given, by treating
+    # first word in every line as Label, second word as its ground-truth
+    # for classification, and every set of two words afterwords as an
+    # entry into the vocabulary and its corresponding number of occurrences
+    # in each mail (one line).
     print 'Opening file:', filename
     with open(filename) as csvfile:
         emailID_list = list()
@@ -69,6 +80,18 @@ def process_dataset(filename):
     return processedData
 
 def generate_clean_data(processedData, trainingData, genTFIDF=False, tfidf_threshold=0.0001, listOfWordsToRemove=list(), test=False):
+    #   processedData needs to come from process_dataset function.
+    #   trainingData is None when this function is run while training. It holds the training data,
+    # post cleaning, in order to know which words to ignore in the test dataset, because they
+    # haven't appeared in the training step.
+    #   genTFIDF is a flag that is enabled when training, to increase the weight given to words
+    # that have a larger role in classification, i.e., aren't too common throughout the dataset
+    # but occur frequently enough in such a way that it gives some information useful for classification.
+    # http://scikit-learn.org/stable/tutorial/text_analytics/working_with_text_data.html
+    # This flag is only useful when training, and is ignored when testing.
+    #   tfidf_threshold is a threshold value below which the TFIDF value for a word is set to 0.
+    #   listOfWordsToRemove is an optional list of words that can be given by the user to be ignored.
+    #   test is a flag that must be set to False when training, and True when testing.
     docsPerWord = dict(processedData['dictOfDocumentsPerWord'])
     wordFrequencyPerDocument = list(processedData['wordFrequencyPerDataPoint'])
     globalWordVocabulary = dict(processedData['vocabularyAndGlobalFrequency'])
